@@ -8,11 +8,15 @@ import certifi
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.network.urlrequest import UrlRequest
+import bs4
+import datetime
 from kivy.core.audio import SoundLoader
-from kivymd.uix.dialog import MDDialog
 import random as rn
-import webbrowser
-from time import sleep
+from pydub import AudioSegment
+from kivymd.uix.dialog import MDDialog
+
+
+
 KV = """
 NavigationLayout:
 
@@ -113,7 +117,7 @@ NavigationLayout:
                             id: avatar
                             size_hint: None, None
                             size: "56dp", "56dp"
-                            source: "Volto.png"
+                            source: "data/logo/kivy-icon-256.png"
         
                     MDLabel:
                         text: "Liturgia Delle Ore App 0.1"
@@ -154,69 +158,96 @@ class MainApp(MDApp):
         
         
         return Builder.load_string(KV)
-        
+        #layout = RelativeLayout()
 
     def answerLODI(self):
-        endpoint = "http://pepermatt94.pythonanywhere.com/"
-        self.root.ids["mdlab"].text = "Caricamento in corso"
-        self.rs_request = UrlRequest(endpoint+"lodi",
-                                      on_success=self.get_data,
-                                      ca_file=certifi.where(),on_failure=self.error, verify = True)
-        self.root.ids["mdlab"].text = "Sono almeno uscito dall'answer"
-        sleep(5)
-        
-    def error(self):
-        self.root.ids["mdlab"].text = "errore nel caricamento pagina"
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/la-liturgia-delle-ore/?data={today}&ora=lodi-mattutine"
+        #following function select in the root (the app if we want) the "mdlab" widget
+        self.root.ids["mdlab"].text = "Caricamento in corso..."
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_data,
+                                     ca_file=certifi.where())
         
     def answerUFFICIO(self):
-        endpoint = f"https://it.wikipedia.org/w/api.php?action=query&list=random&rnlimit=1&rnnamespace=0&format=json"
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/la-liturgia-delle-ore/?data={today}&ora=ufficio-delle-letture"
         #following function select in the root (the app if we want) the "mdlab" widget
         self.root.ids["mdlab"].text = "Caricamento in corso..."
-        self.rs_request = UrlRequest(endpoint+"ufficio",
-                                      on_success=self.get_data,
-                                      ca_file=certifi.where())
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_data,
+                                     ca_file=certifi.where())
     def answerVESPRI(self):
-        endpoint = f"http://pepermatt94.pythonanywhere.com/"
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/la-liturgia-delle-ore/?data={today}&ora=vespri"
         #following function select in the root (the app if we want) the "mdlab" widget
         self.root.ids["mdlab"].text = "Caricamento in corso..."
-        self.rs_request = UrlRequest(endpoint+"vespri",
-                                      on_success=self.get_data,
-                                      ca_file=certifi.where())
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_data,
+                                     ca_file=certifi.where())
         
     def answerORAMEDIA(self):
-        endpoint = f"http://pepermatt94.pythonanywhere.com/"
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/la-liturgia-delle-ore/?data={today}&ora=ora-media"
         #following function select in the root (the app if we want) the "mdlab" widget
         self.root.ids["mdlab"].text = "Caricamento in corso..."
-        self.rs_request = UrlRequest(endpoint+"ora-media",
-                                      on_success=self.get_data,
-                                      ca_file=certifi.where(), on_failure=self.error)
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_data,
+                                     ca_file=certifi.where())
         
     def answerCOMPIETA(self):
-        endpoint = f"http://pepermatt94.pythonanywhere.com/"
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/la-liturgia-delle-ore/?data={today}&ora=compieta"
+        #following function select in the root (the app if we want) the "mdlab" widget
         self.root.ids["mdlab"].text = "Caricamento in corso..."
-        self.rs_request = UrlRequest(endpoint +"compieta",
-                                      on_success=self.get_data,
-                                      ca_file=certifi.where(), on_failure=self.error)
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_data,
+                                     ca_file=certifi.where())
         
-
+    def answerMessa(self):
+        today = datetime.date.today()
+        today = f"{today.year}{today.month}{today.day}"
+        endpoint = f"https://www.chiesacattolica.it/liturgia-del-giorno/?data-liturgia=20210505"
+        #following function select in the root (the app if we want) the "mdlab" widget
+        self.root.ids["mdlab"].text = "Caricamento in corso..."
+        self.rs_request = UrlRequest(endpoint,
+                                     on_success=self.get_dataMISSA,
+                                     ca_file=certifi.where())
+   
     def get_data(self, request, response):
-        self.root.ids["mdlab"].text = "ora sono dentro il get_data"
-        sleep(5)
-        breakpoint()
-        try:
-            response != ""
-        except KeyError:
-            content = f"Ci spiace, ma la ricerca delle lodi non ha prodotto risultati!\n\nRiprova! "
-        self.root.ids["mdlab"].text = f"{content}"
+        html_reader = bs4.BeautifulSoup(response, "html.parser")
+        LaudesElem = ".seed-post" 
+        Laudes = html_reader.select(LaudesElem)
+        Laudes = Laudes[0].getText()
+        
+        self.root.ids["mdlab"].text = Laudes
+        
+    def get_dataMISSA(self, request, response):
+        html_reader = bs4.BeautifulSoup(response, "html.parser")
+        LaudesElem = ".container main_container" 
+        Laudes = html_reader.select(LaudesElem)
+        Laudes = Laudes[0].getText()
+        self.root.ids["mdlab"].text = Laudes
         
     def play(self):
-        Random = str(rn.randint(1,100))
+        Random = str(rn.randint(1,80))
         endpoint = f"http://www.sanciro.ischia.it/2/{Random}.mp3"
-        webbrowser.open(endpoint)
+        song = requests.get(endpoint)
+        with open("todaySong.mpeg", "wb") as f:
+            f.write(song.content)
+            f.close()
         
+        AudioSegment.from_file("todaySong.mpeg").export("todaySong.mp3", format="mp3")
+        
+        
+        self.sound = SoundLoader.load("todaySong.mp3")
+        self.sound.play()
         
     def stop(self):
-        #self.sound.stop()
-        pass
-           
+        self.sound.stop()
 MainApp().run()
