@@ -34,7 +34,7 @@ NavigationLayout:
                     left_action_items: [['menu', lambda x: nav_drawer.set_state()]]
         
                 GridLayout:
-                    rows: 8
+                    rows: 4
                     #row_force_default:True
                     #row_default_height:40
             
